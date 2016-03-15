@@ -617,7 +617,7 @@ class Dropzone extends Emitter
 
   init: ->
     # In case it isn't set already
-    @element.setAttribute("enctype", "multipart/form-data") if @element.tagName == "form"
+    @element.setAttribute("enctype", "application/x-www-form-urlencoded") if @element.tagName == "form"
 
     if @element.classList.contains("dropzone") and !@element.querySelector(".dz-message")
       @element.appendChild Dropzone.createElement """<div class="dz-default dz-message"><span>#{@options.dictDefaultMessage}</span></div>"""
@@ -1216,10 +1216,10 @@ class Dropzone extends Emitter
     for headerName, headerValue of headers
       xhr.setRequestHeader headerName, headerValue if headerValue
 
-    formData = new FormData()
+    formData = {}
 
     # Adding all @options parameters
-    formData.append key, value for key, value of @options.params if @options.params
+    formData.key = value for key, value of @options.params if @options.params
 
     # Let the user add additional data if necessary
     @emit "sending", file, xhr, formData for file in files
@@ -1227,27 +1227,37 @@ class Dropzone extends Emitter
 
 
     # Take care of other input elements
-    if @element.tagName == "FORM"
-      for input in @element.querySelectorAll "input, textarea, select, button"
-        inputName = input.getAttribute "name"
-        inputType = input.getAttribute "type"
+    #if @element.tagName == "FORM"
+    #  for input in @element.querySelectorAll "input, textarea, select, button"
+    #    inputName = input.getAttribute "name"
+    #    inputType = input.getAttribute "type"
 
-        if input.tagName == "SELECT" and input.hasAttribute "multiple"
+    #    if input.tagName == "SELECT" and input.hasAttribute "multiple"
           # Possibly multiple values
-          formData.append inputName, option.value for option in input.options when option.selected
-        else if !inputType or (inputType.toLowerCase() not in [ "checkbox", "radio" ]) or input.checked
-          formData.append inputName, input.value
+    #      formData.append inputName, option.value for option in input.options when option.selected
+    #    else if !inputType or (inputType.toLowerCase() not in [ "checkbox", "radio" ]) or input.checked
+    #      formData.append inputName, input.value
 
 
     # Finally add the file
     # Has to be last because some servers (eg: S3) expect the file to be the
     # last parameter
-    formData.append @_getParamName(i), files[i], @_renameFilename(files[i].name) for i in [0..files.length-1]
+    #formData.append @_getParamName(i), files[i], @_renameFilename(files[i].name) for i in [0..files.length-1]
+    for i in [0..files.length-1]
+      fileReader = new FileReader
 
-    @submitRequest xhr, formData, files
+      fileReader.onload = =>
+        tmp = {
+          content: fileReader.result,
+          fileName: @_renameFilename(file.name)
+        }
+        formData.params = tmp
+        @submitRequest xhr, formData
 
-  submitRequest: (xhr, formData, files) ->
-    xhr.send formData
+      fileReader.readAsDataURL file
+
+  submitRequest: (xhr, formData) ->
+    xhr.send JSON.stringify(formData)
 
   # Called internally when processing is finished.
   # Individual callbacks have to be called in the appropriate sections.

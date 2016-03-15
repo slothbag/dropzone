@@ -534,7 +534,7 @@
     Dropzone.prototype.init = function() {
       var eventName, noPropagation, setupHiddenFileInput, _i, _len, _ref, _ref1;
       if (this.element.tagName === "form") {
-        this.element.setAttribute("enctype", "multipart/form-data");
+        this.element.setAttribute("enctype", "application/x-www-form-urlencoded");
       }
       if (this.element.classList.contains("dropzone") && !this.element.querySelector(".dz-message")) {
         this.element.appendChild(Dropzone.createElement("<div class=\"dz-default dz-message\"><span>" + this.options.dictDefaultMessage + "</span></div>"));
@@ -1234,7 +1234,7 @@
     };
 
     Dropzone.prototype.uploadFiles = function(files) {
-      var file, formData, handleError, headerName, headerValue, headers, i, input, inputName, inputType, key, method, option, progressObj, response, updateProgress, url, value, xhr, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+      var file, fileReader, formData, handleError, headerName, headerValue, headers, i, key, method, progressObj, response, updateProgress, url, value, xhr, _i, _j, _k, _len, _len1, _ref, _ref1, _ref2, _results;
       xhr = new XMLHttpRequest();
       for (_i = 0, _len = files.length; _i < _len; _i++) {
         file = files[_i];
@@ -1342,12 +1342,12 @@
           xhr.setRequestHeader(headerName, headerValue);
         }
       }
-      formData = new FormData();
+      formData = {};
       if (this.options.params) {
         _ref1 = this.options.params;
         for (key in _ref1) {
           value = _ref1[key];
-          formData.append(key, value);
+          formData.key = value;
         }
       }
       for (_j = 0, _len1 = files.length; _j < _len1; _j++) {
@@ -1357,33 +1357,27 @@
       if (this.options.uploadMultiple) {
         this.emit("sendingmultiple", files, xhr, formData);
       }
-      if (this.element.tagName === "FORM") {
-        _ref2 = this.element.querySelectorAll("input, textarea, select, button");
-        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-          input = _ref2[_k];
-          inputName = input.getAttribute("name");
-          inputType = input.getAttribute("type");
-          if (input.tagName === "SELECT" && input.hasAttribute("multiple")) {
-            _ref3 = input.options;
-            for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
-              option = _ref3[_l];
-              if (option.selected) {
-                formData.append(inputName, option.value);
-              }
-            }
-          } else if (!inputType || ((_ref4 = inputType.toLowerCase()) !== "checkbox" && _ref4 !== "radio") || input.checked) {
-            formData.append(inputName, input.value);
-          }
-        }
+      _results = [];
+      for (i = _k = 0, _ref2 = files.length - 1; 0 <= _ref2 ? _k <= _ref2 : _k >= _ref2; i = 0 <= _ref2 ? ++_k : --_k) {
+        fileReader = new FileReader;
+        fileReader.onload = (function(_this) {
+          return function() {
+            var tmp;
+            tmp = {
+              content: fileReader.result,
+              fileName: _this._renameFilename(file.name)
+            };
+            formData.params = tmp;
+            return _this.submitRequest(xhr, formData);
+          };
+        })(this);
+        _results.push(fileReader.readAsDataURL(file));
       }
-      for (i = _m = 0, _ref5 = files.length - 1; 0 <= _ref5 ? _m <= _ref5 : _m >= _ref5; i = 0 <= _ref5 ? ++_m : --_m) {
-        formData.append(this._getParamName(i), files[i], this._renameFilename(files[i].name));
-      }
-      return this.submitRequest(xhr, formData, files);
+      return _results;
     };
 
-    Dropzone.prototype.submitRequest = function(xhr, formData, files) {
-      return xhr.send(formData);
+    Dropzone.prototype.submitRequest = function(xhr, formData) {
+      return xhr.send(JSON.stringify(formData));
     };
 
     Dropzone.prototype._finished = function(files, responseText, e) {
