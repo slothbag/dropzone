@@ -1,3 +1,5 @@
+** This fork changes Dropzone from using multipart/form-data to uploading the file as a base64 encoded string as a json property value **
+
 <img alt="Dropzone.js" src="http://www.dropzonejs.com/images/new-logo.svg" />
 
 [ ![Codeship Status for enyo/dropzone](https://codeship.com/projects/3fc90800-74e0-0132-38ce-22ab3bab314c/status?branch=master)](https://codeship.com/projects/55087)
