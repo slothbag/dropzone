@@ -1,4 +1,4 @@
-** This fork changes Dropzone from using multipart/form-data to uploading the file as a base64 encoded string as a json property value **
+**This fork changes Dropzone from using multipart/form-data to uploading the file as a base64 encoded string as a json property value**
 
 <img alt="Dropzone.js" src="http://www.dropzonejs.com/images/new-logo.svg" />
 
